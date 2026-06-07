@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
-import mockApi from "../assets/mockApi";
 /*
 
 .food-entry-item {
@@ -111,39 +110,6 @@ const FoodLog = () => {
 
   //input ref for ai image
   const inputRef = useRef(null);
-
-  const handleImageUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setLoading(true);
-      const { data } = await mockApi.imageAnalysis.analyze();
-      const analyzedFood = data.result;
-
-      const newEntry = {
-        id: Date.now(),
-        documentId: "doc_food_" + Date.now(),
-        name: analyzedFood.name,
-        calories: Number(analyzedFood.calories),
-        mealType: "breakfast", // Default to breakfast
-        createdAt: new Date().toISOString(),
-      };
-
-      const updatedLogs = [...allFoodLogs, newEntry];
-      localStorage.setItem("foodLogs", JSON.stringify(updatedLogs));
-      setAllFoodLogs(updatedLogs);
-      toast.success(`AI identified: ${analyzedFood.name} (${analyzedFood.calories} kcal)`);
-    } catch (error) {
-      console.log(error);
-      toast.error("Failed to analyze image");
-    } finally {
-      setLoading(false);
-      if (inputRef.current) {
-        inputRef.current.value = "";
-      }
-    }
-  };
 
   const today = new Date().toISOString().split("T")[0];
   const loadEntries = () => {
@@ -246,13 +212,7 @@ const FoodLog = () => {
               <SparkleIcon className="size-5" />
               Upload Image(AI)
             </Button>
-            <input
-              type="file"
-              hidden
-              accept="image/*"
-              ref={inputRef}
-              onChange={handleImageUpload}
-            />
+            <input type="file" hidden accept="image/*" ref={inputRef} />
             {loading && (
               <div className="fixed inset-0 bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur flex items-center justify-center z-100">
                 <Loader2Icon className="size-8 text-emerald-600 dark:text-emerald-400 animate-spin" />

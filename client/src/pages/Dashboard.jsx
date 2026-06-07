@@ -168,7 +168,7 @@ const Dashboard = () => {
               </div>
               <div>
                 <p className="text-sm dark:text-slate-400 text-slate-500">
-                  Consumed Burnded
+                  Calories Burned
                 </p>
                 <p className="text-xl font-bold text-slate-800 dark:text-white">
                   {totalBurned}
@@ -279,7 +279,7 @@ const Dashboard = () => {
               <p className="dark:text-white text-slate-800 font-semibold">
                 BMI
               </p>
-              <p className={`text-lg font-bold ${status.color}`}>{bmi}</p>
+              <p className={`text-lg font-bold ${status.color}`}>{bmi.toFixed(2)}</p>
             </div>
           </div>
           <div className=" h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
