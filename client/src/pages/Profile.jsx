@@ -8,7 +8,7 @@ import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
 import { goalOptions } from "../assets/assets";
 import { LogOutIcon, SunIcon, MoonIcon } from "lucide-react";
-//check use effect later
+//check use effect later******
 /*
 .page-container {
   @apply min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 transition-colors duration-200;
@@ -27,7 +27,7 @@ import { LogOutIcon, SunIcon, MoonIcon } from "lucide-react";
 }
  */
 const Profile = () => {
-  const { user, setUser, logout, fetchUser, allFoodLogs, allactivityLogs } =
+  const { user, setUser, logout, fetchUser, allFoodLogs, allActivityLogs } =
     useContext(AppContext);
   const { theme, themeToggle } = useContext(ThemeContext);
 
@@ -69,7 +69,7 @@ const Profile = () => {
 
   const getStats = () => {
     const totalFoodEntries = allFoodLogs?.length || 0;
-    const totalActivities = allactivityLogs?.length || 0;
+    const totalActivities = allActivityLogs?.length || 0;
     return { totalFoodEntries, totalActivities };
   };
 

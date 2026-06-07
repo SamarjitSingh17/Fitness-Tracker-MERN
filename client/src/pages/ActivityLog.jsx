@@ -1,4 +1,5 @@
 import React, { act, useContext, useEffect, useState } from "react";
+import { toast } from "react-hot-toast";
 import AppContext from "../context/AppContext";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
@@ -103,7 +104,24 @@ const ActivityLog = () => {
   };
 
   //handle delete
-  const handleDelte = async (documentId) => {};
+  const handleDelete = async (documentId) => {
+    try {
+      const confirmDelete = window.confirm(
+        "Are you sure you want to delete this activity?",
+      );
+      if (!confirmDelete) return;
+
+      const updatedLogs = allActivityLogs.filter(
+        (e) => e.documentId !== documentId,
+      );
+      localStorage.setItem("activityLogs", JSON.stringify(updatedLogs));
+      setAllActivityLogs(updatedLogs);
+      toast.success("Activity deleted!");
+    } catch (error) {
+      console.log(error);
+      toast.error("Failed to delete activity");
+    }
+  };
 
   return (
     <div className="page-container">
@@ -209,17 +227,17 @@ const ActivityLog = () => {
         )}
         {/* Activities list */}
         {activities.length === 0 ? (
-          <Card className="text-center py-12">
-            <div className="mb-4 flex justify-center items-center">
-              <div className="h-16 w-16 rounded-lg bg-slate-200 dark:bg-slate-800 flex items-center justify-center">
-                <Dumbbell className="w-8 h-8 text-slate-500" />
+          <Card className="text-center py-12 space-y-2">
+            <div className="flex items-center justify-center">
+              <div className="h-16 w-16 rounded-xl flex items-center justify-center bg-slate-100 dark:bg-slate-800">
+                <Dumbbell className="h-8 w-8 text-slate-500 dark:text-slate-400" />
               </div>
             </div>
-            <h3 className="mb-4 text-slate-700 dark:text-slate-200 font-semibold">
-              No Activities Logged Today
-            </h3>
-            <p className="mb-4 text-sm dark:text-slate-400 text-slate-500">
-              Start Moving and track your progress
+            <p className="font-semibold text-slate-800 dark:text-white">
+              No activities logged today
+            </p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">
+              Start moving and track your progress
             </p>
           </Card>
         ) : (
