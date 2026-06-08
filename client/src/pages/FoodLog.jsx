@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from "react";
-import { toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 import AppContext from "../context/AppContext";
 import Card from "../components/ui/Card";
 import {
@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
+import api from "../config/api";
 /*
 
 .food-entry-item {
@@ -78,30 +79,25 @@ const FoodLog = () => {
     calories: 0,
     mealType: "",
   });
+
   const [loading, setLoading] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim() || formData.calories <= 0 || !formData.mealType) {
+    if (
+      !formData.name.trim() ||
+      !formData.calories ||
+      formData.calories <= 0 ||
+      !formData.mealType
+    ) {
       return toast.error("Please enter valid data");
     }
     try {
-      // TODO: Replace with Strapi API call later
-      // const { data } = await api.foodLogs.create({ data: formData });
-      const newEntry = {
-        id: Date.now(),
-        documentId: "doc_food_" + Date.now(),
-        name: formData.name,
-        calories: Number(formData.calories),
-        mealType: formData.mealType,
-        createdAt: new Date().toISOString(),
-      };
-
-      const updatedLogs = [...allFoodLogs, newEntry];
-      localStorage.setItem("foodLogs", JSON.stringify(updatedLogs));
-      setAllFoodLogs(updatedLogs);
-
+      const { data } = await api.post("/api/food-logs", { data: formData });
+      setAllFoodLogs((prev) => [...prev, data]);
       setFormData({ name: "", calories: 0, mealType: "" });
       setShowForm(false);
+      toast.success("Food entry logged successfully");
     } catch (error) {
       console.log(error.message);
       toast.error(error?.message || "Failed to add food log");
@@ -112,6 +108,7 @@ const FoodLog = () => {
   const inputRef = useRef(null);
 
   const today = new Date().toISOString().split("T")[0];
+
   const loadEntries = () => {
     const todayEntries = allFoodLogs.filter(
       (f) => f.createdAt?.split("T")[0] === today,
@@ -139,21 +136,62 @@ const FoodLog = () => {
     setShowForm(true);
   };
 
+  // ai image analysis
+  const handleImageChange = async (e) => {
+    e.preventDefault();
+    const file = e.target.files[0];
+    if (!file) return;
+    setLoading(true);
+    const formData = new FormData();
+    formData.append("image", file);
+    try {
+      const { data: analysisData } = await api.post(
+        "/api/image-analysis",
+        formData,
+      );
+      //gemini api will return 1.name and 2.calories of food
+      const result = analysisData.result;
+      let mealType = "";
+      const hour = new Date().getHours();
+      if (hour >= 0 && hour < 12) {
+        mealType = "breakfast";
+      } else if (hour >= 12 && hour < 16) {
+        mealType = "lunch";
+      } else if (hour >= 16 && hour < 20) {
+        mealType = "snack";
+      } else {
+        mealType = "dinner";
+      }
+      if (!mealType || !result.name || !result.calories) {
+        return toast.error("Missing Details");
+      }
+      const { data: newFoodLog } = await api.post("/api/food-logs", {
+        data: { name: result.name, calories: result.calories, mealType },
+      });
+      setAllFoodLogs((prev) => [...prev, newFoodLog]);
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+      toast.success("Food entry logged successfully");
+    } catch (error) {
+      console.log(error.message);
+      toast.error(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = async (documentId) => {
     try {
-      const confirmDelete = window.confirm(
-        "Are you sure you want to delete this entry?",
+      const confirm = window.confirm(
+        "Are You sure you want to delete this entry?",
       );
-
-      if (!confirmDelete) return;
-
-      const updatedLogs = allFoodLogs.filter((e) => e.documentId !== documentId);
-      localStorage.setItem("foodLogs", JSON.stringify(updatedLogs));
-      setAllFoodLogs(updatedLogs);
-      toast.success("Food entry deleted!");
+      if (!confirm) return;
+      await api.delete(`/api/food-logs/${documentId}`);
+      setAllFoodLogs((prev) => prev.filter((e) => e.documentId != documentId));
     } catch (error) {
-      console.log(error);
-      toast.error("Failed to delete food entry");
+      console.log(error.message);
+      toast.error(error.message);
     }
   };
 
@@ -212,7 +250,13 @@ const FoodLog = () => {
               <SparkleIcon className="size-5" />
               Upload Image(AI)
             </Button>
-            <input type="file" hidden accept="image/*" ref={inputRef} />
+            <input
+              onChange={handleImageChange}
+              type="file"
+              hidden
+              accept="image/*"
+              ref={inputRef}
+            />
             {loading && (
               <div className="fixed inset-0 bg-slate-100/50 dark:bg-slate-900/50 backdrop-blur flex items-center justify-center z-100">
                 <Loader2Icon className="size-8 text-emerald-600 dark:text-emerald-400 animate-spin" />
@@ -326,10 +370,7 @@ const FoodLog = () => {
 
                   <div className="space-y-3">
                     {groupedEntries[mealType].map((food) => (
-                      <div
-                        key={food.id}
-                        className="food-entry-item"
-                      >
+                      <div key={food.id} className="food-entry-item">
                         <p>{food.name}</p>
 
                         <div className="flex items-center gap-4">

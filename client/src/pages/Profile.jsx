@@ -8,6 +8,8 @@ import Input from "../components/ui/Input";
 import Select from "../components/ui/Select";
 import { goalOptions } from "../assets/assets";
 import { LogOutIcon, SunIcon, MoonIcon } from "lucide-react";
+import api from "../config/api";
+import { toast } from "react-toastify";
 //check use effect later******
 /*
 .page-container {
@@ -35,23 +37,24 @@ const Profile = () => {
     try {
       // TODO: Replace with Strapi API call later
       // const { data } = await api.user.update(user.id, formData);
-      const updatedUser = { ...user, ...formData };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      setUser(updatedUser);
-      setIsEditing(false);
+      const { data } = await api.put(`/api/users/${user.id}`, formData);
+      await fetchUser(user?.token || "");
+      toast.success("Profile Updated Successfully");
     } catch (error) {
       console.log(error.message);
+      toast.error(error.message);
     }
+    setIsEditing(false);
   };
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    age: 0,
-    weight: 0,
-    height: 0,
-    goal: "maintain",
-    dailyCalorieIntake: 2000,
-    dailyCalorieBurn: 400,
+    age: user.age,
+    weight: user.weight,
+    height: user.height,
+    goal: user.goal,
+    dailyCalorieIntake: user.dailyCalorieIntake,
+    dailyCalorieBurn: user.dailyCalorieBurn,
   });
 
   const fetchUserData = () => {
@@ -76,7 +79,10 @@ const Profile = () => {
   const stats = getStats();
 
   useEffect(() => {
-    fetchUser();
+    const token = user?.token || localStorage.getItem("token");
+    if (token) {
+      fetchUser(token);
+    }
   }, []);
 
   if (!user || !formData) return null;
@@ -87,7 +93,7 @@ const Profile = () => {
         <h3 className="text-2xl font-semibold text-slate-700 dark:text-slate-100">
           Profile
         </h3>
-        <p className="text-sm text-slate-500 dark:textlate-400">
+        <p className="text-sm text-slate-500 dark:text-slate-400">
           Manage your Settings
         </p>
       </div>

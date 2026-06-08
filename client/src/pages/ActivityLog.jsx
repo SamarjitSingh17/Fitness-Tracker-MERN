@@ -1,9 +1,10 @@
-import React, { act, useContext, useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
+import React, { useContext, useEffect, useState } from "react";
+import { toast } from "react-toastify";
 import AppContext from "../context/AppContext";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
+import api from "../config/api";
 import { quickActivities } from "../assets/assets";
 import { Activity, Dumbbell, TimerIcon, Trash2Icon } from "lucide-react";
 
@@ -80,26 +81,13 @@ const ActivityLog = () => {
       return toast.error("Please enter valid data");
     }
     try {
-      // TODO: Replace with Strapi API call later
-      // const { data } = await api.activityLogs.create({ data: formData });
-      const newEntry = {
-        id: Date.now(),
-        documentId: "doc_act_" + Date.now(),
-        name: formData.name,
-        duration: Number(formData.duration),
-        calories: Number(formData.calories),
-        createdAt: new Date().toISOString(),
-      };
-
-      const updatedLogs = [...allActivityLogs, newEntry];
-      localStorage.setItem("activityLogs", JSON.stringify(updatedLogs));
-      setAllActivityLogs(updatedLogs);
-
-      setFormData({ name: "", duration: 0, calories: 0 });
+      const { data } = await api.post("/api/activity-logs", { data: formData });
+      setAllActivityLogs((prev) => [...prev, data]);
       setShowForm(false);
+      toast.success("Activity Logged Successfully!");
     } catch (error) {
       console.log(error.message);
-      toast.error(error?.message || "Failed to add activity");
+      toast.error(error.message);
     }
   };
 
@@ -110,16 +98,14 @@ const ActivityLog = () => {
         "Are you sure you want to delete this activity?",
       );
       if (!confirmDelete) return;
-
-      const updatedLogs = allActivityLogs.filter(
-        (e) => e.documentId !== documentId,
+      await api.delete(`/api/activity-logs${documentId}`);
+      setAllActivityLogs((prev) =>
+        prev.filter((a) => a.documentId != documentId),
       );
-      localStorage.setItem("activityLogs", JSON.stringify(updatedLogs));
-      setAllActivityLogs(updatedLogs);
-      toast.success("Activity deleted!");
+      toast.success("Activity Deleted Successfully");
     } catch (error) {
-      console.log(error);
-      toast.error("Failed to delete activity");
+      console.log(error.message);
+      toast.error(error.message);
     }
   };
 

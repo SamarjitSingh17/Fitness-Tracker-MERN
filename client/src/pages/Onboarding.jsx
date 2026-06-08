@@ -1,5 +1,5 @@
 import React, { useContext, useState } from "react";
-import { Toaster, toast } from "react-hot-toast";
+import { toast } from "react-toastify";
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,6 +14,7 @@ import Button from "../components/ui/Button";
 import { ageRanges, goalOptions } from "../assets/assets";
 import { useNavigate } from "react-router-dom";
 import Slider from "../components/ui/Slider";
+import api from "../config/api";
 // .onboarding-container {
 //   @apply min-h-screen bg-linear-to-b from-emerald-50 to-white dark:from-slate-900 dark:to-slate-950 flex flex-col transition-colors duration-200;
 // }
@@ -43,7 +44,6 @@ export const ageRanges = [
 */
 
 const Onboarding = () => {
-  <Toaster />;
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
   const { user, setOnboardingCompleted, fetchUser } = useContext(AppContext);
@@ -84,20 +84,22 @@ const Onboarding = () => {
         height: formData.height ? formData.height : null,
         createdAt: new Date().toISOString(),
       };
-      // later with starpi these 3 lines would be changed
-      const exisitingUser = JSON.parse(localStorage.getItem("user"));
-      const updatedUser = { ...exisitingUser, ...userData };
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      toast.success("Profile Updated!");
-      setOnboardingCompleted(true);
-      fetchUser(user?.token || "");
+      localStorage.setItem("fitnessUser", JSON.stringify(userData));
+      try {
+        await api.put(`/api/users/${user.id}`, userData);
+        toast.success("Profile Updated Successfully!");
+        setOnboardingCompleted(true);
+        fetchUser(user?.token || "");
+      } catch (error) {
+        console.log(error.message);
+        toast.error(error.message);
+      }
       navigate("/");
     }
   };
 
   return (
     <>
-      <Toaster />
       {/* outer container */}
       <div className="onboarding-container">
         {/* Header */}

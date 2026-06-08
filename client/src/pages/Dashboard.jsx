@@ -3,6 +3,7 @@ import { getMotivationalMessage } from "../assets/assets";
 import AppContext from "../context/AppContext";
 import Card from "../components/ui/Card";
 import ProgressBar from "../components/ui/ProgressBar";
+import api from "../config/api";
 import {
   Activity,
   Car,
@@ -42,7 +43,9 @@ const Dashboard = () => {
   const [todayFood, setTodayFood] = useState([]);
   const [todayActivity, setTodayActivity] = useState([]);
   const DAILY_CALORIES_LIMIT = user?.dailyCalorieIntake || 2000;
-  const bmi = Number(user.weight / Math.pow(user.height / 100, 2)) || 24.5;
+  const bmi = user?.weight
+    ? Number(user.weight / Math.pow(user.height / 100, 2))
+    : 24.5;
   const getStatus = () => {
     if (bmi < 18.5) {
       return {
@@ -86,13 +89,13 @@ const Dashboard = () => {
     loadUserData();
   }, [allActivityLogs, allFoodLogs]);
 
-  const caloriesConsumed =
-    todayFood.reduce((sum, f) => sum + f.calories, 0) || 900; // 900 dummy
-  const remainingCalories = DAILY_CALORIES_LIMIT - caloriesConsumed || 1100; //1100 is dummy
-  const totalActiveMinutes =
-    todayActivity.reduce((sum, a) => sum + a.duration, 0) || 30; // 30 is dummy
-  const totalBurned =
-    todayActivity.reduce((sum, a) => sum + a.calories, 0) || 150; //150 dummy
+  const caloriesConsumed = todayFood.reduce((sum, f) => sum + f.calories, 0);
+  const remainingCalories = DAILY_CALORIES_LIMIT - caloriesConsumed;
+  const totalActiveMinutes = todayActivity.reduce(
+    (sum, a) => sum + a.duration,
+    0,
+  );
+  const totalBurned = todayActivity.reduce((sum, a) => sum + a.calories, 0);
 
   const motivation = getMotivationalMessage(
     caloriesConsumed,
@@ -279,7 +282,9 @@ const Dashboard = () => {
               <p className="dark:text-white text-slate-800 font-semibold">
                 BMI
               </p>
-              <p className={`text-lg font-bold ${status.color}`}>{bmi.toFixed(2)}</p>
+              <p className={`text-lg font-bold ${status.color}`}>
+                {bmi.toFixed(2)}
+              </p>
             </div>
           </div>
           <div className=" h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">

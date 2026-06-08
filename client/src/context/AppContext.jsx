@@ -1,44 +1,51 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../config/api";
+import { toast } from "react-toastify";
 
 const AppContext = createContext(null);
 
 export const AppProvider = ({ children }) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState("");
+  const [user, setUser] = useState(null);
   const [isUserFetched, setIsUserFetched] = useState(false);
   const [onboardingCompleted, setOnboardingCompleted] = useState(false);
   const [allFoodLogs, setAllFoodLogs] = useState([]);
   const [allActivityLogs, setAllActivityLogs] = useState([]);
 
   const signup = async (credentials) => {
-    const newUser = {
-      id: Date.now(),
-      username: credentials.username,
-      email: credentials.email,
-      age: 0,
-      weight: 0,
-      height: 0,
-      goal: "maintain",
-    };
-    if (newUser.age && newUser.weight && newUser.goal) {
-      setOnboardingCompleted(true);
+    try {
+      const { data } = await api.post("/api/auth/local/register", credentials);
+      setUser({ ...data.user, token: data.jwt });
+      if (data?.user?.age && data?.user?.weight && data?.user?.goal) {
+        setOnboardingCompleted(true);
+      }
+      localStorage.setItem("token", data.jwt);
+      api.defaults.headers.common["Authorization"] = `Bearer ${data.jwt}`;
+      toast.success("Signed up successfully");
+      navigate("/dashboard");
+    } catch (error) {
+      console.log(error.message);
+      toast.error(error.message);
     }
-    localStorage.setItem("user", JSON.stringify(newUser));
-    localStorage.setItem("token", "fake_token_" + Date.now());
-    setUser(newUser);
-    navigate("/onboarding");
   };
 
   const login = async (credentials) => {
-    const savedUser = JSON.parse(localStorage.getItem("user"));
-    if (savedUser) {
-      setUser({ ...savedUser, token: "fake_token_" + Date.now() });
-      if (savedUser.age && savedUser.weight && savedUser.goal) {
+    try {
+      const { data } = await api.post("/api/auth/local", {
+        identifier: credentials.email,
+        password: credentials.password,
+      });
+      setUser({ ...data.user, token: data.jwt });
+      if (data?.user?.age && data?.user?.weight && data?.user?.goal) {
         setOnboardingCompleted(true);
       }
-      localStorage.setItem("token", "fake_token_" + Date.now());
-      navigate("/dashboard");
+      localStorage.setItem("token", data.jwt);
+      api.defaults.headers.common["Authorization"] = `Bearer ${data.jwt}`;
+      toast.success("Logged in successfully");
+    } catch (error) {
+      console.log(error.message);
+      toast.error(error.message);
     }
   };
 
@@ -46,29 +53,50 @@ export const AppProvider = ({ children }) => {
     localStorage.removeItem("token");
     setUser(null);
     setOnboardingCompleted(false);
+    api.defaults.headers.common["Authorization"] = "";
     navigate("/");
   };
 
   // token passed as parameter just like video
   const fetchUser = async (token) => {
-    const savedUser = JSON.parse(localStorage.getItem("user"));
-    if (savedUser) {
-      setUser({ ...savedUser, token }); // spread token into user like video
-      if (savedUser.age && savedUser.weight && savedUser.goal) {
+    try {
+      const { data } = await api.get("/api/users/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUser({ ...data, token });
+      if (data?.age && data?.weight && data?.goal) {
         setOnboardingCompleted(true);
       }
+      api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+      setIsUserFetched(true);
+    } catch (error) {
+      console.log(error.message);
+      toast.error(error.message);
     }
-    setIsUserFetched(true);
   };
 
-  const fetchFoodLogs = async () => {
-    const savedLogs = JSON.parse(localStorage.getItem("foodLogs")) || [];
-    setAllFoodLogs(savedLogs);
+  const fetchFoodLogs = async (token) => {
+    try {
+      const { data } = await api.get("/api/food-logs", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAllFoodLogs(data);
+    } catch (error) {
+      console.log(error.message);
+      toast.error(error.message);
+    }
   };
 
-  const fetchActivityLogs = async () => {
-    const savedLogs = JSON.parse(localStorage.getItem("activityLogs")) || [];
-    setAllActivityLogs(savedLogs);
+  const fetchActivityLogs = async (token) => {
+    try {
+      const { data } = await api.get("/api/activity-logs", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAllActivityLogs(data);
+    } catch (error) {
+      console.log(error.message);
+      toast.error(error.message);
+    }
   };
 
   useEffect(() => {
@@ -76,8 +104,8 @@ export const AppProvider = ({ children }) => {
     if (token) {
       (async () => {
         await fetchUser(token); // pass token like video
-        await fetchFoodLogs();
-        await fetchActivityLogs();
+        await fetchFoodLogs(token);
+        await fetchActivityLogs(token);
       })();
     } else {
       setIsUserFetched(true);
