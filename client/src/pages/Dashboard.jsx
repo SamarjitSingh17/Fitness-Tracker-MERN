@@ -42,7 +42,7 @@ const Dashboard = () => {
   const { user, allFoodLogs, allActivityLogs } = useContext(AppContext);
   const [todayFood, setTodayFood] = useState([]);
   const [todayActivity, setTodayActivity] = useState([]);
-  const DAILY_CALORIES_LIMIT = user?.dailyCalorieIntake || 2000;
+  const DAILY_CALORIES_LIMIT = user?.dailyCalorieIntake;
   const bmi = user?.weight
     ? Number(user.weight / Math.pow(user.height / 100, 2))
     : 24.5;

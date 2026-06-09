@@ -14,8 +14,9 @@ module.exports = {
         result,
       });
     } catch (error) {
+      console.error("Image-analysis error:", error);
       return ctx.internalServerError("Analysis failed", {
-        error: error.message,
+        error: error.message || error,
       });
     }
   },

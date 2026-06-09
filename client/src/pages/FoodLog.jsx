@@ -174,8 +174,12 @@ const FoodLog = () => {
       }
       toast.success("Food entry logged successfully");
     } catch (error) {
-      console.log(error.message);
-      toast.error(error.message);
+      console.error("Image analysis failed:", error.response?.data || error);
+      toast.error(
+        error.response?.data?.error?.message ||
+          error.message ||
+          "Image analysis failed",
+      );
     } finally {
       setLoading(false);
     }

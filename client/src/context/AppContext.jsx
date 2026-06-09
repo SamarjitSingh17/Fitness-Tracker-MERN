@@ -42,6 +42,8 @@ export const AppProvider = ({ children }) => {
       }
       localStorage.setItem("token", data.jwt);
       api.defaults.headers.common["Authorization"] = `Bearer ${data.jwt}`;
+      await fetchFoodLogs(data.jwt);
+      await fetchActivityLogs(data.jwt);
       toast.success("Logged in successfully");
     } catch (error) {
       console.log(error.message);
@@ -53,6 +55,8 @@ export const AppProvider = ({ children }) => {
     localStorage.removeItem("token");
     setUser(null);
     setOnboardingCompleted(false);
+    setAllActivityLogs([]);
+    setAllFoodLogs([]);
     api.defaults.headers.common["Authorization"] = "";
     navigate("/");
   };

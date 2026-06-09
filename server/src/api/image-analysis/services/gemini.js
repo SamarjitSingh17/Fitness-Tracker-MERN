@@ -15,6 +15,7 @@ const IMAGE_MIME_TYPES = {
   ".gif": "image/gif",
   ".bmp": "image/bmp",
   ".heic": "image/heic",
+  ".avif": "image/avif",
 };
 
 const analyzeImage = async (filePath) => {
