@@ -193,6 +193,7 @@ const FoodLog = () => {
       if (!confirm) return;
       await api.delete(`/api/food-logs/${documentId}`);
       setAllFoodLogs((prev) => prev.filter((e) => e.documentId != documentId));
+      toast.success("Food entry deleted successfully");
     } catch (error) {
       console.log(error.message);
       toast.error(error.message);
